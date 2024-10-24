@@ -4,6 +4,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
+from kivy.uix.spinner import Spinner  # For dropdown selection
 
 class Student:
     def __init__(self, name="", phone_number="", email_address="", feedback=""):
@@ -36,8 +37,14 @@ class ManagerScreen(Screen):
         self.add_teacher_btn.bind(on_press=self.add_teacher)
         layout.add_widget(self.add_teacher_btn)
 
+        # Spinner for Teacher Selection (Dropdown)
+        self.teacher_spinner = Spinner(text="Select Teacher to Delete",
+                                       values=[teacher.name for teacher in self.teachers],
+                                       size_hint=(None, None), size=(200, 44))
+        layout.add_widget(self.teacher_spinner)
+
         # Delete Teacher Button
-        self.delete_teacher_btn = Button(text="Delete Last Teacher")
+        self.delete_teacher_btn = Button(text="Delete Selected Teacher")
         self.delete_teacher_btn.bind(on_press=self.delete_teacher)
         layout.add_widget(self.delete_teacher_btn)
 
@@ -59,15 +66,29 @@ class ManagerScreen(Screen):
             self.teachers.append(new_teacher)
             self.label.text = f"Added teacher: {new_teacher.name}"
             self.teacher_name_input.text = ""  # Clear the input field after adding
+
+            # Update the spinner with new teacher list
+            self.teacher_spinner.values = [teacher.name for teacher in self.teachers]
         else:
             self.label.text = "Please enter a valid teacher name."
 
     def delete_teacher(self, instance):
-        if self.teachers:
-            removed_teacher = self.teachers.pop()
-            self.label.text = f"Deleted teacher: {removed_teacher.name}"
+        selected_teacher_name = self.teacher_spinner.text
+        teacher_to_delete = next((teacher for teacher in self.teachers if teacher.name == selected_teacher_name), None)
+
+        if teacher_to_delete:
+            self.teachers.remove(teacher_to_delete)
+            self.label.text = f"Deleted teacher: {teacher_to_delete.name}"
+
+            # Update the spinner with updated teacher list
+            if self.teachers:
+                self.teacher_spinner.values = [teacher.name for teacher in self.teachers]
+                self.teacher_spinner.text = "Select Teacher to Delete"
+            else:
+                self.teacher_spinner.values = []
+                self.teacher_spinner.text = "No Teachers Available"
         else:
-            self.label.text = "No teachers to delete."
+            self.label.text = "No teacher selected or available."
 
     def view_all_feedback(self, instance):
         feedback_text = "\n".join(
