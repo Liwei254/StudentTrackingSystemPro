@@ -4,7 +4,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
-from kivy.uix.spinner import Spinner  # For dropdown selection
+from kivy.uix.spinner import Spinner
 
 class Student:
     def __init__(self, name="", phone_number="", email_address="", feedback=""):
@@ -19,9 +19,10 @@ class Teacher:
         self.students = []
 
 class ManagerScreen(Screen):
-    def __init__(self, teachers, **kwargs):
+    def __init__(self, teachers, screen_manager, **kwargs):
         super().__init__(**kwargs)
         self.teachers = teachers
+        self.screen_manager = screen_manager
         layout = BoxLayout(orientation='vertical')
 
         # Label for Manager Menu
@@ -53,8 +54,9 @@ class ManagerScreen(Screen):
         self.view_feedback_btn.bind(on_press=self.view_all_feedback)
         layout.add_widget(self.view_feedback_btn)
 
-        # Exit Button
-        self.exit_btn = Button(text="Exit", on_press=lambda x: App.get_running_app().stop())
+        # Exit Button (to return to role selection)
+        self.exit_btn = Button(text="Return to Role Selection")
+        self.exit_btn.bind(on_press=self.return_to_role_selection)
         layout.add_widget(self.exit_btn)
 
         self.add_widget(layout)
@@ -97,6 +99,9 @@ class ManagerScreen(Screen):
         )
         self.label.text = feedback_text if feedback_text else "No feedback available."
 
+    def return_to_role_selection(self, instance):
+        self.screen_manager.current = 'role_selection'  # Go back to the Role Selection screen
+
 
 class TeacherScreen(Screen):
     def __init__(self, teacher, **kwargs):
@@ -127,8 +132,9 @@ class TeacherScreen(Screen):
         self.give_feedback_btn.bind(on_press=self.give_feedback)
         layout.add_widget(self.give_feedback_btn)
 
-        # Exit Button
-        self.exit_btn = Button(text="Exit", on_press=lambda x: App.get_running_app().stop())
+        # Exit Button (return to role selection screen)
+        self.exit_btn = Button(text="Return to Role Selection")
+        self.exit_btn.bind(on_press=lambda x: setattr(App.get_running_app().root, 'current', 'role_selection'))
         layout.add_widget(self.exit_btn)
 
         self.add_widget(layout)
@@ -187,8 +193,12 @@ class RoleSelectionScreen(Screen):
         self.screen_manager.current = 'manager'
 
     def go_to_teacher_screen(self, instance):
-        # Automatically select the first teacher for now
         if self.teachers:
+            # Create the teacher screen dynamically and switch to it
+            teacher = self.teachers[0]  # You can implement a selection process here if needed
+            if 'teacher' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen('teacher'))
+            self.screen_manager.add_widget(TeacherScreen(teacher=teacher, name='teacher'))
             self.screen_manager.current = 'teacher'
         else:
             self.label.text = "No teachers available. Please add a teacher first."
@@ -201,13 +211,10 @@ class FeedbackApp(App):
         # Create screen manager and add screens
         sm = ScreenManager()
         sm.add_widget(RoleSelectionScreen(screen_manager=sm, teachers=self.teachers, name="role_selection"))
-        sm.add_widget(ManagerScreen(teachers=self.teachers, name="manager"))
+        sm.add_widget(ManagerScreen(teachers=self.teachers, screen_manager=sm, name="manager"))
 
-        # Add a placeholder TeacherScreen (the real one will be added dynamically)
-        if self.teachers:
-            sm.add_widget(TeacherScreen(teacher=self.teachers[0], name="teacher"))
-        
         return sm
+
 
 if __name__ == "__main__":
     FeedbackApp().run()
