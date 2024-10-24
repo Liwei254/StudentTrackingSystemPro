@@ -18,6 +18,125 @@ class Teacher:
         self.name = name
         self.students = []
 
+class TeacherScreen(Screen):
+    def __init__(self, teacher, **kwargs):
+        super().__init__(**kwargs)
+        self.teacher = teacher
+        layout = BoxLayout(orientation='vertical')
+
+        # Label for Teacher Menu
+        self.label = Label(text=f"Teacher: {self.teacher.name}", font_size=24)
+        layout.add_widget(self.label)
+
+        # TextInput for Student Name
+        self.student_name_input = TextInput(hint_text="Enter Student Name", multiline=False)
+        layout.add_widget(self.student_name_input)
+
+        # Add Student Button
+        self.add_student_btn = Button(text="Add Student")
+        self.add_student_btn.bind(on_press=self.add_student)
+        layout.add_widget(self.add_student_btn)
+
+        # Spinner (dropdown) for selecting a student to delete
+        self.student_spinner = Spinner(text="Select Student to Delete",
+                                       values=[student.name for student in self.teacher.students],
+                                       size_hint=(None, None), size=(200, 44))
+        layout.add_widget(self.student_spinner)
+
+        # Delete Selected Student Button
+        self.delete_student_btn = Button(text="Delete Selected Student")
+        self.delete_student_btn.bind(on_press=self.delete_student)
+        layout.add_widget(self.delete_student_btn)
+
+        # Give Feedback Button
+        self.give_feedback_btn = Button(text="Give Feedback to First Student")
+        self.give_feedback_btn.bind(on_press=self.give_feedback)
+        layout.add_widget(self.give_feedback_btn)
+
+        # Exit Button (return to role selection screen)
+        self.exit_btn = Button(text="Return to Role Selection")
+        self.exit_btn.bind(on_press=lambda x: setattr(App.get_running_app().root, 'current', 'role_selection'))
+        layout.add_widget(self.exit_btn)
+
+        self.add_widget(layout)
+
+    def add_student(self, instance):
+        student_name = self.student_name_input.text.strip()
+        if student_name:
+            new_student = Student(name=student_name)
+            self.teacher.students.append(new_student)
+            self.label.text = f"Added student: {new_student.name}"
+            self.student_name_input.text = ""  # Clear the input field after adding
+
+            # Update the spinner with the new student list
+            self.student_spinner.values = [student.name for student in self.teacher.students]
+        else:
+            self.label.text = "Please enter a valid student name."
+
+    def delete_student(self, instance):
+        selected_student_name = self.student_spinner.text
+        student_to_delete = next((student for student in self.teacher.students if student.name == selected_student_name), None)
+
+        if student_to_delete:
+            self.teacher.students.remove(student_to_delete)
+            self.label.text = f"Deleted student: {student_to_delete.name}"
+
+            # Update the spinner with the updated student list
+            if self.teacher.students:
+                self.student_spinner.values = [student.name for student in self.teacher.students]
+                self.student_spinner.text = "Select Student to Delete"
+            else:
+                self.student_spinner.values = []
+                self.student_spinner.text = "No Students Available"
+        else:
+            self.label.text = "No student selected or available."
+
+    def give_feedback(self, instance):
+        if self.teacher.students:
+            student = self.teacher.students[0]  # For simplicity, we use the first student
+            student.feedback = "Updated feedback."
+            self.label.text = f"Feedback updated for {student.name}."
+        else:
+            self.label.text = "No students available for feedback."
+
+class RoleSelectionScreen(Screen):
+    def __init__(self, screen_manager, teachers, **kwargs):
+        super().__init__(**kwargs)
+        self.screen_manager = screen_manager
+        self.teachers = teachers
+
+        layout = BoxLayout(orientation='vertical')
+
+        # Role Selection Label
+        self.label = Label(text="Select Role", font_size=24)
+        layout.add_widget(self.label)
+
+        # Manager Button
+        self.manager_btn = Button(text="Manager", font_size=18)
+        self.manager_btn.bind(on_press=self.go_to_manager_screen)
+        layout.add_widget(self.manager_btn)
+
+        # Teacher Button
+        self.teacher_btn = Button(text="Teacher", font_size=18)
+        self.teacher_btn.bind(on_press=self.go_to_teacher_screen)
+        layout.add_widget(self.teacher_btn)
+
+        self.add_widget(layout)
+
+    def go_to_manager_screen(self, instance):
+        self.screen_manager.current = 'manager'
+
+    def go_to_teacher_screen(self, instance):
+        if self.teachers:
+            # Create the teacher screen dynamically and switch to it
+            teacher = self.teachers[0]  # You can implement a selection process here if needed
+            if 'teacher' in self.screen_manager.screen_names:
+                self.screen_manager.remove_widget(self.screen_manager.get_screen('teacher'))
+            self.screen_manager.add_widget(TeacherScreen(teacher=teacher, name='teacher'))
+            self.screen_manager.current = 'teacher'
+        else:
+            self.label.text = "No teachers available. Please add a teacher first."
+
 class ManagerScreen(Screen):
     def __init__(self, teachers, screen_manager, **kwargs):
         super().__init__(**kwargs)
@@ -101,108 +220,6 @@ class ManagerScreen(Screen):
 
     def return_to_role_selection(self, instance):
         self.screen_manager.current = 'role_selection'  # Go back to the Role Selection screen
-
-
-class TeacherScreen(Screen):
-    def __init__(self, teacher, **kwargs):
-        super().__init__(**kwargs)
-        self.teacher = teacher
-        layout = BoxLayout(orientation='vertical')
-
-        # Label for Teacher Menu
-        self.label = Label(text=f"Teacher: {self.teacher.name}", font_size=24)
-        layout.add_widget(self.label)
-
-        # TextInput for Student Name
-        self.student_name_input = TextInput(hint_text="Enter Student Name", multiline=False)
-        layout.add_widget(self.student_name_input)
-
-        # Add Student Button
-        self.add_student_btn = Button(text="Add Student")
-        self.add_student_btn.bind(on_press=self.add_student)
-        layout.add_widget(self.add_student_btn)
-
-        # Delete Student Button
-        self.delete_student_btn = Button(text="Delete Last Student")
-        self.delete_student_btn.bind(on_press=self.delete_student)
-        layout.add_widget(self.delete_student_btn)
-
-        # Give Feedback Button
-        self.give_feedback_btn = Button(text="Give Feedback to First Student")
-        self.give_feedback_btn.bind(on_press=self.give_feedback)
-        layout.add_widget(self.give_feedback_btn)
-
-        # Exit Button (return to role selection screen)
-        self.exit_btn = Button(text="Return to Role Selection")
-        self.exit_btn.bind(on_press=lambda x: setattr(App.get_running_app().root, 'current', 'role_selection'))
-        layout.add_widget(self.exit_btn)
-
-        self.add_widget(layout)
-
-    def add_student(self, instance):
-        student_name = self.student_name_input.text.strip()
-        if student_name:
-            new_student = Student(name=student_name)
-            self.teacher.students.append(new_student)
-            self.label.text = f"Added student: {new_student.name}"
-            self.student_name_input.text = ""  # Clear the input field after adding
-        else:
-            self.label.text = "Please enter a valid student name."
-
-    def delete_student(self, instance):
-        if self.teacher.students:
-            removed_student = self.teacher.students.pop()
-            self.label.text = f"Deleted student: {removed_student.name}"
-        else:
-            self.label.text = "No students to delete."
-
-    def give_feedback(self, instance):
-        if self.teacher.students:
-            student = self.teacher.students[0]  # For simplicity, we use the first student
-            student.feedback = "Updated feedback."
-            self.label.text = f"Feedback updated for {student.name}."
-        else:
-            self.label.text = "No students available for feedback."
-
-
-class RoleSelectionScreen(Screen):
-    def __init__(self, screen_manager, teachers, **kwargs):
-        super().__init__(**kwargs)
-        self.screen_manager = screen_manager
-        self.teachers = teachers
-
-        layout = BoxLayout(orientation='vertical')
-
-        # Role Selection Label
-        self.label = Label(text="Select Role", font_size=24)
-        layout.add_widget(self.label)
-
-        # Manager Button
-        self.manager_btn = Button(text="Manager", font_size=18)
-        self.manager_btn.bind(on_press=self.go_to_manager_screen)
-        layout.add_widget(self.manager_btn)
-
-        # Teacher Button
-        self.teacher_btn = Button(text="Teacher", font_size=18)
-        self.teacher_btn.bind(on_press=self.go_to_teacher_screen)
-        layout.add_widget(self.teacher_btn)
-
-        self.add_widget(layout)
-
-    def go_to_manager_screen(self, instance):
-        self.screen_manager.current = 'manager'
-
-    def go_to_teacher_screen(self, instance):
-        if self.teachers:
-            # Create the teacher screen dynamically and switch to it
-            teacher = self.teachers[0]  # You can implement a selection process here if needed
-            if 'teacher' in self.screen_manager.screen_names:
-                self.screen_manager.remove_widget(self.screen_manager.get_screen('teacher'))
-            self.screen_manager.add_widget(TeacherScreen(teacher=teacher, name='teacher'))
-            self.screen_manager.current = 'teacher'
-        else:
-            self.label.text = "No teachers available. Please add a teacher first."
-
 
 class FeedbackApp(App):
     def build(self):
