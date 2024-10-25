@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Vocational and technical high schools in Kenya provide training in over 130 occupations. The process of tracking students during their practical training periods involves manual paperwork, which can be cumbersome and inefficient. This project aims to digitalize the current processes by proposing a web-based solution for tracking practical training in vocational and technical high schools in Kenya. This Python project is a Teacher-Student Feedback Management System built with Tkinter.
+Vocational and technical high schools in Kenya provide training in over 130 occupations. The process of tracking students during their practical training periods involves manual paperwork, which can be cumbersome and inefficient. This project aims to digitalize the current processes by proposing a web-based solution for tracking practical training in vocational and technical high schools in Kenya. This Python project is a Teacher-Student Feedback Management System built with Kivy.
 
 ## Technologies To Be Used
 - **Front-End(User Interface)**: Kivy.
