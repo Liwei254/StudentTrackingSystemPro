@@ -6,6 +6,7 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
+from kivy.graphics import Color, Rectangle
 
 
 class Student:
@@ -37,20 +38,26 @@ class FeedbackApp(App):
         self.teachers[1].students[1] = Student("Student4", "444-444-4444", "student4@gmail.com", "")
         self.teachers[2].students[0] = Student("Student5", "555-555-5555", "student5@gmail.com", "")
         self.teachers[2].students[1] = Student("Student6", "666-666-6666", "student6@gmail.com", "")
-        
+
         # Main Layout
         main_layout = GridLayout(cols=1, padding=10, spacing=10)
 
+        with main_layout.canvas.before:
+            Color(1, 1, 1, 1)  # Set background color to white
+            self.rect = Rectangle(size=main_layout.size, pos=main_layout.pos)
+
+        main_layout.bind(size=self._update_rect, pos=self._update_rect)
+
         # Manager Section
         manager_layout = BoxLayout(orientation="vertical", spacing=10)
-        manager_layout.add_widget(Label(text="Manager Actions", font_size=20, size_hint_y=None, height=40))
+        manager_layout.add_widget(Label(text="Manager Actions", font_size=20, color=(0, 0, 0, 1), size_hint_y=None, height=40))  # Black text
         manager_layout.add_widget(Button(text="Add Teacher", on_press=self.add_teacher, size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="Delete Teacher", on_press=self.delete_teacher, size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="View All Feedback", on_press=self.view_all_feedback, size_hint_y=None, height=40))
 
         # Teacher Section
         teacher_layout = BoxLayout(orientation="vertical", spacing=10)
-        teacher_layout.add_widget(Label(text="Teacher Actions", font_size=20, size_hint_y=None, height=40))
+        teacher_layout.add_widget(Label(text="Teacher Actions", font_size=20, color=(0, 0, 0, 1), size_hint_y=None, height=40))  # Black text
         teacher_layout.add_widget(Button(text="Manage Teacher", on_press=self.select_teacher, size_hint_y=None, height=40))
 
         # Add sections to main layout
@@ -58,6 +65,10 @@ class FeedbackApp(App):
         main_layout.add_widget(teacher_layout)
 
         return main_layout
+
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
 
     def show_popup(self, title, content):
         popup_layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
@@ -156,8 +167,7 @@ class FeedbackApp(App):
         layout.add_widget(phone_input)
         layout.add_widget(email_input)
         layout.add_widget(Button(text="Add", size_hint_y=None, height=40, on_press=lambda x: self.save_student(teacher, name_input.text, phone_input.text, email_input.text, popup)))
-        popup.dismiss()
-        popup = Popup(title="Add Student", content=layout, size_hint=(0.8, 0.7))
+        popup = Popup(title="Add Student", content=layout, size_hint=(0.8, 0.5))
         popup.open()
 
     def save_student(self, teacher, name, phone, email, popup):
