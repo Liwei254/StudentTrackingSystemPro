@@ -1,19 +1,17 @@
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
-from kivy.uix.spinner import Spinner
-from kivy.core.window import Window
+from kivy.uix.popup import Popup
+from kivy.uix.textinput import TextInput
 
-# Set a custom background color for the app
-Window.clearcolor = (0.9, 0.9, 0.95, 1)  # Light grey-blue
-
+# Define the data classes for Students and Teachers
 class Student:
-    def __init__(self, name="", feedback=""):
+    def __init__(self, name="", phone_number="", email_address="", feedback=""):
         self.name = name
+        self.phone_number = phone_number
+        self.email_address = email_address
         self.feedback = feedback
 
 class Teacher:
@@ -21,206 +19,230 @@ class Teacher:
         self.name = name
         self.students = []
 
-class TeacherScreen(Screen):
-    def __init__(self, teacher, **kwargs):
+class MainScreen(Screen):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.teacher = teacher
+        self.teachers = [Teacher("Teacher1"), Teacher("Teacher2"), Teacher("Teacher3")]
+        self.build_main_menu()
 
-        # Outer BoxLayout to center the layout
-        outer_layout = BoxLayout(orientation='vertical', padding=20)
-        inner_layout = GridLayout(cols=1, spacing=10, row_default_height=40, size_hint=(0.6, 0.8), pos_hint={'center_x': 0.5, 'center_y': 0.5})
+    def build_main_menu(self):
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
         
-        # Header label
-        self.label = Label(text=f"Teacher: {self.teacher.name}", font_size=24, bold=True, color=(0, 0, 0, 1))
-        inner_layout.add_widget(self.label)
+        layout.add_widget(Label(text="Teacher-Student Feedback System", font_size=24))
 
-        # Input field for adding students
-        self.student_name_input = TextInput(hint_text="Enter Student Name", multiline=False, size_hint_y=None, height=30)
-        inner_layout.add_widget(self.student_name_input)
+        add_teacher_btn = Button(text="Add Teacher", size_hint=(1, 0.2))
+        add_teacher_btn.bind(on_press=self.add_teacher)
+        layout.add_widget(add_teacher_btn)
 
-        # Add Student button
-        self.add_student_btn = Button(text="Add Student", background_color=(0.2, 0.6, 0.8, 1))
-        self.add_student_btn.bind(on_press=self.add_student)
-        inner_layout.add_widget(self.add_student_btn)
+        delete_teacher_btn = Button(text="Delete Teacher", size_hint=(1, 0.2))
+        delete_teacher_btn.bind(on_press=self.delete_teacher)
+        layout.add_widget(delete_teacher_btn)
 
-        # Dropdown spinner for deleting students
-        self.student_spinner = Spinner(text="Select Student to Delete",
-                                       values=[student.name for student in self.teacher.students],
-                                       size_hint=(None, None), size=(200, 44))
-        inner_layout.add_widget(self.student_spinner)
+        view_feedback_btn = Button(text="View All Feedback", size_hint=(1, 0.2))
+        view_feedback_btn.bind(on_press=self.view_all_feedback)
+        layout.add_widget(view_feedback_btn)
 
-        # Delete Student button
-        self.delete_student_btn = Button(text="Delete Selected Student", background_color=(0.8, 0.4, 0.4, 1))
-        self.delete_student_btn.bind(on_press=self.delete_student)
-        inner_layout.add_widget(self.delete_student_btn)
+        manage_teacher_btn = Button(text="Manage Teacher", size_hint=(1, 0.2))
+        manage_teacher_btn.bind(on_press=self.go_to_manage_teacher)
+        layout.add_widget(manage_teacher_btn)
 
-        # Feedback button
-        self.give_feedback_btn = Button(text="Give Feedback to First Student", background_color=(0.4, 0.8, 0.4, 1))
-        self.give_feedback_btn.bind(on_press=self.give_feedback)
-        inner_layout.add_widget(self.give_feedback_btn)
-
-        # Exit button
-        self.exit_btn = Button(text="Return to Role Selection", background_color=(0.6, 0.6, 0.8, 1))
-        self.exit_btn.bind(on_press=lambda x: setattr(App.get_running_app().root, 'current', 'role_selection'))
-        inner_layout.add_widget(self.exit_btn)
-
-        # Center the layout
-        outer_layout.add_widget(inner_layout)
-        self.add_widget(outer_layout)
-
-    def add_student(self, instance):
-        student_name = self.student_name_input.text.strip()
-        if student_name:
-            new_student = Student(name=student_name)
-            self.teacher.students.append(new_student)
-            self.label.text = f"Added student: {new_student.name}"
-            self.student_name_input.text = ""
-            self.student_spinner.values = [student.name for student in self.teacher.students]
-        else:
-            self.label.text = "Please enter a valid student name."
-
-    def delete_student(self, instance):
-        selected_student_name = self.student_spinner.text
-        student_to_delete = next((student for student in self.teacher.students if student.name == selected_student_name), None)
-        if student_to_delete:
-            self.teacher.students.remove(student_to_delete)
-            self.label.text = f"Deleted student: {student_to_delete.name}"
-            self.student_spinner.values = [student.name for student in self.teacher.students]
-        else:
-            self.label.text = "No student selected or available."
-
-    def give_feedback(self, instance):
-        if self.teacher.students:
-            student = self.teacher.students[0]
-            student.feedback = "Updated feedback."
-            self.label.text = f"Feedback updated for {student.name}."
-        else:
-            self.label.text = "No students available for feedback."
-
-class RoleSelectionScreen(Screen):
-    def __init__(self, screen_manager, teachers, **kwargs):
-        super().__init__(**kwargs)
-        self.screen_manager = screen_manager
-        self.teachers = teachers
-
-        # Outer BoxLayout to center the layout
-        outer_layout = BoxLayout(orientation='vertical', padding=20)
-        inner_layout = GridLayout(cols=1, spacing=10, row_default_height=40, size_hint=(0.6, 0.8), pos_hint={'center_x': 0.5, 'center_y': 0.5})
-        
-        # Header label
-        self.label = Label(text="Select Role", font_size=24, bold=True, color=(0, 0, 0, 1))
-        inner_layout.add_widget(self.label)
-
-        # Manager button
-        self.manager_btn = Button(text="Manager", font_size=18, background_color=(0.4, 0.8, 0.6, 1))
-        self.manager_btn.bind(on_press=self.go_to_manager_screen)
-        inner_layout.add_widget(self.manager_btn)
-
-        # Teacher button
-        self.teacher_btn = Button(text="Teacher", font_size=18, background_color=(0.6, 0.4, 0.8, 1))
-        self.teacher_btn.bind(on_press=self.go_to_teacher_screen)
-        inner_layout.add_widget(self.teacher_btn)
-
-        # Center the layout
-        outer_layout.add_widget(inner_layout)
-        self.add_widget(outer_layout)
-
-    def go_to_manager_screen(self, instance):
-        self.screen_manager.current = 'manager'
-
-    def go_to_teacher_screen(self, instance):
-        if self.teachers:
-            teacher = self.teachers[0]
-            if 'teacher' in self.screen_manager.screen_names:
-                self.screen_manager.remove_widget(self.screen_manager.get_screen('teacher'))
-            self.screen_manager.add_widget(TeacherScreen(teacher=teacher, name='teacher'))
-            self.screen_manager.current = 'teacher'
-        else:
-            self.label.text = "No teachers available. Please add a teacher first."
-
-class ManagerScreen(Screen):
-    def __init__(self, teachers, screen_manager, **kwargs):
-        super().__init__(**kwargs)
-        self.teachers = teachers
-        self.screen_manager = screen_manager
-
-        # Outer BoxLayout to center the layout
-        outer_layout = BoxLayout(orientation='vertical', padding=20)
-        inner_layout = GridLayout(cols=1, spacing=10, row_default_height=40, size_hint=(0.6, 0.8), pos_hint={'center_x': 0.5, 'center_y': 0.5})
-        
-        # Header label
-        self.label = Label(text="Manager Menu", font_size=24, bold=True, color=(0, 0, 0, 1))
-        inner_layout.add_widget(self.label)
-
-        # Input for teacher name
-        self.teacher_name_input = TextInput(hint_text="Enter Teacher Name", multiline=False, size_hint_y=None, height=30)
-        inner_layout.add_widget(self.teacher_name_input)
-
-        # Add Teacher button
-        self.add_teacher_btn = Button(text="Add Teacher", background_color=(0.2, 0.6, 0.8, 1))
-        self.add_teacher_btn.bind(on_press=self.add_teacher)
-        inner_layout.add_widget(self.add_teacher_btn)
-
-        # Dropdown for selecting teacher to delete
-        self.teacher_spinner = Spinner(text="Select Teacher to Delete",
-                                       values=[teacher.name for teacher in self.teachers],
-                                       size_hint=(None, None), size=(200, 44))
-        inner_layout.add_widget(self.teacher_spinner)
-
-        # Delete Teacher button
-        self.delete_teacher_btn = Button(text="Delete Selected Teacher", background_color=(0.8, 0.4, 0.4, 1))
-        self.delete_teacher_btn.bind(on_press=self.delete_teacher)
-        inner_layout.add_widget(self.delete_teacher_btn)
-
-        # View All Feedback button
-        self.view_feedback_btn = Button(text="View All Feedback", background_color=(0.4, 0.8, 0.4, 1))
-        self.view_feedback_btn.bind(on_press=self.view_all_feedback)
-        inner_layout.add_widget(self.view_feedback_btn)
-
-        # Return button
-        self.exit_btn = Button(text="Return to Role Selection", background_color=(0.6, 0.6, 0.8, 1))
-        self.exit_btn.bind(on_press=self.return_to_role_selection)
-        inner_layout.add_widget(self.exit_btn)
-
-        # Center the layout
-        outer_layout.add_widget(inner_layout)
-        self.add_widget(outer_layout)
+        self.add_widget(layout)
 
     def add_teacher(self, instance):
-        teacher_name = self.teacher_name_input.text.strip()
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        input_field = TextInput(hint_text="Enter teacher's name")
+        content.add_widget(input_field)
+
+        add_button = Button(text="Add")
+        add_button.bind(on_press=lambda x: self.add_teacher_to_list(input_field.text))
+        add_button.bind(on_press=lambda x: popup.dismiss())
+        content.add_widget(add_button)
+
+        popup = Popup(title="Add Teacher", content=content, size_hint=(0.6, 0.4))
+        popup.open()
+
+    def add_teacher_to_list(self, teacher_name):
         if teacher_name:
-            new_teacher = Teacher(name=teacher_name)
-            self.teachers.append(new_teacher)
-            self.teacher_spinner.values = [teacher.name for teacher in self.teachers]
-            self.teacher_name_input.text = ""
-            self.label.text = f"Added teacher: {new_teacher.name}"
-        else:
-            self.label.text = "Please enter a valid teacher name."
+            self.teachers.append(Teacher(name=teacher_name))
 
     def delete_teacher(self, instance):
-        selected_teacher_name = self.teacher_spinner.text
-        teacher_to_delete = next((teacher for teacher in self.teachers if teacher.name == selected_teacher_name), None)
-        if teacher_to_delete:
-            self.teachers.remove(teacher_to_delete)
-            self.teacher_spinner.values = [teacher.name for teacher in self.teachers]
-            self.label.text = f"Deleted teacher: {teacher_to_delete.name}"
-        else:
-            self.label.text = "No teacher selected or available."
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        input_field = TextInput(hint_text="Enter teacher's name to delete")
+        content.add_widget(input_field)
+
+        delete_button = Button(text="Delete")
+        delete_button.bind(on_press=lambda x: self.delete_teacher_from_list(input_field.text))
+        delete_button.bind(on_press=lambda x: popup.dismiss())
+        content.add_widget(delete_button)
+
+        popup = Popup(title="Delete Teacher", content=content, size_hint=(0.6, 0.4))
+        popup.open()
+
+    def delete_teacher_from_list(self, teacher_name):
+        self.teachers = [teacher for teacher in self.teachers if teacher.name != teacher_name]
 
     def view_all_feedback(self, instance):
-        feedback_text = "\n".join([f"{teacher.name}: {', '.join([student.feedback for student in teacher.students])}" for teacher in self.teachers if teacher.students])
-        self.label.text = f"All Feedback:\n{feedback_text}" if feedback_text else "No feedback available."
+        feedback_text = ""
+        for teacher in self.teachers:
+            feedback_text += f"\nFeedback for {teacher.name}'s students:\n"
+            for student in teacher.students:
+                if student.name:
+                    feedback_text += f"Student: {student.name}, Feedback: {student.feedback}\n"
+        if feedback_text:
+            self.show_popup("All Feedback", feedback_text)
+        else:
+            self.show_popup("All Feedback", "No feedback available for any students.")
 
-    def return_to_role_selection(self, instance):
-        self.screen_manager.current = 'role_selection'
+    def go_to_manage_teacher(self, instance):
+        self.manager.current = "manage_teacher"
+
+    def show_popup(self, title, message):
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        content.add_widget(Label(text=message))
+        close_button = Button(text="Close", size_hint=(1, 0.2))
+        content.add_widget(close_button)
+
+        popup = Popup(title=title, content=content, size_hint=(0.7, 0.5))
+        close_button.bind(on_press=popup.dismiss)
+        popup.open()
+
+class ManageTeacherScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.teacher = None
+        self.build_teacher_menu()
+
+    def build_teacher_menu(self):
+        layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        
+        layout.add_widget(Label(text="Manage Teacher", font_size=24))
+
+        self.teacher_name_input = TextInput(hint_text="Enter teacher name", size_hint=(1, 0.2))
+        layout.add_widget(self.teacher_name_input)
+
+        select_teacher_btn = Button(text="Select Teacher", size_hint=(1, 0.2))
+        select_teacher_btn.bind(on_press=self.select_teacher)
+        layout.add_widget(select_teacher_btn)
+
+        add_student_btn = Button(text="Add Student", size_hint=(1, 0.2))
+        add_student_btn.bind(on_press=self.add_student)
+        layout.add_widget(add_student_btn)
+
+        delete_student_btn = Button(text="Delete Student", size_hint=(1, 0.2))
+        delete_student_btn.bind(on_press=self.delete_student)
+        layout.add_widget(delete_student_btn)
+
+        give_feedback_btn = Button(text="Give Feedback", size_hint=(1, 0.2))
+        give_feedback_btn.bind(on_press=self.give_feedback)
+        layout.add_widget(give_feedback_btn)
+
+        back_btn = Button(text="Back to Main Menu", size_hint=(1, 0.2))
+        back_btn.bind(on_press=self.go_back_to_main)
+        layout.add_widget(back_btn)
+
+        self.add_widget(layout)
+
+    def select_teacher(self, instance):
+        teacher_name = self.teacher_name_input.text
+        self.teacher = next((t for t in self.manager.get_screen("main").teachers if t.name == teacher_name), None)
+        if self.teacher:
+            self.teacher_name_input.hint_text = f"Managing {self.teacher.name}"
+        else:
+            self.show_popup("Error", "Teacher not found.")
+
+    def add_student(self, instance):
+        if not self.teacher:
+            self.show_popup("Error", "No teacher selected.")
+            return
+
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        name_input = TextInput(hint_text="Student Name")
+        phone_input = TextInput(hint_text="Phone Number")
+        email_input = TextInput(hint_text="Email Address")
+
+        content.add_widget(name_input)
+        content.add_widget(phone_input)
+        content.add_widget(email_input)
+
+        add_button = Button(text="Add")
+        add_button.bind(on_press=lambda x: self.add_student_to_teacher(name_input.text, phone_input.text, email_input.text))
+        add_button.bind(on_press=lambda x: popup.dismiss())
+        content.add_widget(add_button)
+
+        popup = Popup(title="Add Student", content=content, size_hint=(0.7, 0.5))
+        popup.open()
+
+    def add_student_to_teacher(self, name, phone, email):
+        if name and phone and email:
+            new_student = Student(name=name, phone_number=phone, email_address=email)
+            self.teacher.students.append(new_student)
+
+    def delete_student(self, instance):
+        if not self.teacher:
+            self.show_popup("Error", "No teacher selected.")
+            return
+
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        student_input = TextInput(hint_text="Enter student name to delete")
+        content.add_widget(student_input)
+
+        delete_button = Button(text="Delete")
+        delete_button.bind(on_press=lambda x: self.delete_student_from_teacher(student_input.text))
+        delete_button.bind(on_press=lambda x: popup.dismiss())
+        content.add_widget(delete_button)
+
+        popup = Popup(title="Delete Student", content=content, size_hint=(0.6, 0.4))
+        popup.open()
+
+    def delete_student_from_teacher(self, student_name):
+        self.teacher.students = [s for s in self.teacher.students if s.name != student_name]
+
+    def give_feedback(self, instance):
+        if not self.teacher:
+            self.show_popup("Error", "No teacher selected.")
+            return
+
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        student_name_input = TextInput(hint_text="Student Name")
+        feedback_input = TextInput(hint_text="Enter feedback")
+        
+        content.add_widget(student_name_input)
+        content.add_widget(feedback_input)
+
+        submit_button = Button(text="Submit")
+        submit_button.bind(on_press=lambda x: self.give_feedback_to_student(student_name_input.text, feedback_input.text))
+        submit_button.bind(on_press=lambda x: popup.dismiss())
+        content.add_widget(submit_button)
+
+        popup = Popup(title="Give Feedback", content=content, size_hint=(0.7, 0.5))
+        popup.open()
+
+    def give_feedback_to_student(self, student_name, feedback):
+        student = next((s for s in self.teacher.students if s.name == student_name), None)
+        if student:
+            student.feedback = feedback
+        else:
+            self.show_popup("Error", "Student not found.")
+
+    def go_back_to_main(self, instance):
+        self.manager.current = "main"
+
+    def show_popup(self, title, message):
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        content.add_widget(Label(text=message))
+        close_button = Button(text="Close", size_hint=(1, 0.2))
+        content.add_widget(close_button)
+
+        popup = Popup(title=title, content=content, size_hint=(0.7, 0.5))
+        close_button.bind(on_press=popup.dismiss)
+        popup.open()
 
 class FeedbackApp(App):
     def build(self):
         sm = ScreenManager()
-        teachers = []
-        sm.add_widget(RoleSelectionScreen(screen_manager=sm, teachers=teachers, name='role_selection'))
-        sm.add_widget(ManagerScreen(teachers=teachers, screen_manager=sm, name='manager'))
+        sm.add_widget(MainScreen(name="main"))
+        sm.add_widget(ManageTeacherScreen(name="manage_teacher"))
         return sm
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     FeedbackApp().run()
