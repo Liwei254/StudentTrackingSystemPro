@@ -39,7 +39,7 @@ class FeedbackApp(App):
         self.teachers[2].students[1] = Student("Student6", "666-666-6666", "student6@gmail.com", "")
 
         # Main Layout
-        self.main_layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        self.main_layout = BoxLayout(orientation="vertical", padding=200, spacing=10)
 
         # Home Screen
         self.show_home_screen()
@@ -48,7 +48,7 @@ class FeedbackApp(App):
 
     def show_home_screen(self):
         self.main_layout.clear_widgets()
-        home_layout = BoxLayout(orientation="vertical", spacing=10, padding=10)
+        home_layout = BoxLayout(orientation="vertical", spacing=30, padding=10)
         home_layout.add_widget(Label(text="Welcome to the Feedback System", font_size=24, size_hint_y=None, height=50))
         
         # MANAGER Button
@@ -99,7 +99,7 @@ class FeedbackApp(App):
         close_button = Button(text="Close", size_hint_y=None, height=40)
         close_button.bind(on_press=lambda x: popup.dismiss())
         popup_layout.add_widget(close_button)
-        popup = Popup(title=title, content=popup_layout, size_hint=(0.8, 0.5))
+        popup = Popup(title=title, content=popup_layout, size_hint=(0.4, 0.3))
         popup.open()
 
     def add_teacher(self, instance):
@@ -109,7 +109,7 @@ class FeedbackApp(App):
         add_button = Button(text="Add", size_hint_y=None, height=40)
         layout.add_widget(add_button)
         add_button.bind(on_press=lambda x: self.save_teacher(input_name.text, popup))
-        popup = Popup(title="Add Teacher", content=layout, size_hint=(0.8, 0.5))
+        popup = Popup(title="Add Teacher", content=layout, size_hint=(0.4, 0.3))
         popup.open()
 
     def save_teacher(self, name, popup):
@@ -126,7 +126,7 @@ class FeedbackApp(App):
         delete_button = Button(text="Delete", size_hint_y=None, height=40)
         layout.add_widget(delete_button)
         delete_button.bind(on_press=lambda x: self.remove_teacher(teacher_spinner.text, popup))
-        popup = Popup(title="Delete Teacher", content=layout, size_hint=(0.8, 0.5))
+        popup = Popup(title="Delete Teacher", content=layout, size_hint=(0.4, 0.3))
         popup.open()
 
     def remove_teacher(self, name, popup):
@@ -154,7 +154,7 @@ class FeedbackApp(App):
         manage_button = Button(text="Manage", size_hint_y=None, height=40)
         layout.add_widget(manage_button)
         manage_button.bind(on_press=lambda x: self.manage_teacher(teacher_spinner.text, popup))
-        popup = Popup(title="Select Teacher", content=layout, size_hint=(0.8, 0.5))
+        popup = Popup(title="Select Teacher", content=layout, size_hint=(0.4, 0.3))
         popup.open()
 
     def manage_teacher(self, teacher_name, popup):
@@ -173,7 +173,7 @@ class FeedbackApp(App):
             delete_button = Button(text="Delete Student", size_hint_y=None, height=40)
             layout.add_widget(delete_button)
             delete_button.bind(on_press=lambda x: self.delete_student(teacher, student_spinner.text))
-            popup = Popup(title=f"Manage Teacher: {teacher.name}", content=layout, size_hint=(0.8, 0.6))
+            popup = Popup(title=f"Manage Teacher: {teacher.name}", content=layout, size_hint=(0.6, 0.4))
             popup.open()
 
     def give_feedback(self, teacher, student_name):
@@ -185,7 +185,7 @@ class FeedbackApp(App):
             submit_button = Button(text="Submit Feedback", size_hint_y=None, height=40)
             layout.add_widget(submit_button)
             submit_button.bind(on_press=lambda x: self.save_feedback(student, feedback_input.text))
-            popup = Popup(title=f"Give Feedback for {student.name}", content=layout, size_hint=(0.8, 0.5))
+            popup = Popup(title=f"Give Feedback for {student.name}", content=layout, size_hint=(0.5, 0.3))
             popup.open()
 
     def save_feedback(self, student, feedback):
@@ -199,7 +199,7 @@ class FeedbackApp(App):
         add_button = Button(text="Add", size_hint_y=None, height=40)
         layout.add_widget(add_button)
         add_button.bind(on_press=lambda x: self.save_student(teacher, input_name.text, popup))
-        popup = Popup(title="Add Student", content=layout, size_hint=(0.8, 0.5))
+        popup = Popup(title="Add Student", content=layout, size_hint=(0.4, 0.3))
         popup.open()
 
     def save_student(self, teacher, name, popup):
