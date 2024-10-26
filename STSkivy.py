@@ -6,6 +6,7 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
+from kivy.graphics import Color, Rectangle
 
 
 class Student:
@@ -41,15 +42,25 @@ class FeedbackApp(App):
         # Main Layout
         self.main_layout = BoxLayout(orientation="vertical", padding=200, spacing=10)
 
+        # Set background color
+        with self.main_layout.canvas.before:
+            Color(0.9608, 0.9608, 0.9804, 1)  # #F5F5FA in RGBA
+            self.rect = Rectangle(size=self.main_layout.size, pos=self.main_layout.pos)
+        self.main_layout.bind(size=self.update_rect, pos=self.update_rect)
+
         # Home Screen
         self.show_home_screen()
 
         return self.main_layout
 
+    def update_rect(self, *args):
+        self.rect.size = self.main_layout.size
+        self.rect.pos = self.main_layout.pos
+
     def show_home_screen(self):
         self.main_layout.clear_widgets()
         home_layout = BoxLayout(orientation="vertical", spacing=30, padding=10)
-        home_layout.add_widget(Label(text="Welcome to the Feedback System", font_size=24, size_hint_y=None, height=50))
+        home_layout.add_widget(Label(text="Welcome to the Feedback System", font_size=24, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=50))
         
         # MANAGER Button
         manager_button = Button(text="MANAGER", size_hint_y=None, height=50)
@@ -67,7 +78,7 @@ class FeedbackApp(App):
         self.main_layout.clear_widgets()
         manager_layout = BoxLayout(orientation="vertical", spacing=10)
 
-        manager_layout.add_widget(Label(text="Manager Actions", font_size=20, color=(0, 0, 0, 1), size_hint_y=None, height=40))
+        manager_layout.add_widget(Label(text="Manager Actions", font_size=20, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="Add Teacher", on_press=self.add_teacher, size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="Delete Teacher", on_press=self.delete_teacher, size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="View All Feedback", on_press=self.view_all_feedback, size_hint_y=None, height=40))
@@ -83,7 +94,7 @@ class FeedbackApp(App):
         self.main_layout.clear_widgets()
         teacher_layout = BoxLayout(orientation="vertical", spacing=10)
 
-        teacher_layout.add_widget(Label(text="Teacher Actions", font_size=20, color=(0, 0, 0, 1), size_hint_y=None, height=40))
+        teacher_layout.add_widget(Label(text="Teacher Actions", font_size=20, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=40))
         teacher_layout.add_widget(Button(text="Manage Teacher", on_press=self.select_teacher, size_hint_y=None, height=40))
 
         # Back Button to return to Home
@@ -173,24 +184,8 @@ class FeedbackApp(App):
             delete_button = Button(text="Delete Student", size_hint_y=None, height=40)
             layout.add_widget(delete_button)
             delete_button.bind(on_press=lambda x: self.delete_student(teacher, student_spinner.text))
-            popup = Popup(title=f"Manage Teacher: {teacher.name}", content=layout, size_hint=(0.6, 0.4))
-            popup.open()
-
-    def give_feedback(self, teacher, student_name):
-        student = next((s for s in teacher.students if s.name == student_name), None)
-        if student:
-            layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-            feedback_input = TextInput(hint_text="Enter feedback here", multiline=True)
-            layout.add_widget(feedback_input)
-            submit_button = Button(text="Submit Feedback", size_hint_y=None, height=40)
-            layout.add_widget(submit_button)
-            submit_button.bind(on_press=lambda x: self.save_feedback(student, feedback_input.text))
-            popup = Popup(title=f"Give Feedback for {student.name}", content=layout, size_hint=(0.5, 0.3))
-            popup.open()
-
-    def save_feedback(self, student, feedback):
-        student.feedback = feedback
-        self.show_popup("Success", f"Feedback for {student.name} saved successfully.")
+            manage_popup = Popup(title="Manage Teacher", content=layout, size_hint=(0.4, 0.5))
+            manage_popup.open()
 
     def add_student(self, teacher):
         layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
@@ -204,14 +199,31 @@ class FeedbackApp(App):
 
     def save_student(self, teacher, name, popup):
         if name:
-            new_student = Student(name)
-            teacher.students.append(new_student)
-            self.show_popup("Success", f"Student {name} added successfully.")
+            teacher.students.append(Student(name=name))
+            self.show_popup("Success", f"Student {name} added.")
             popup.dismiss()
 
     def delete_student(self, teacher, student_name):
         teacher.students = [s for s in teacher.students if s.name != student_name]
         self.show_popup("Success", f"Student {student_name} deleted.")
+
+    def give_feedback(self, teacher, student_name):
+        student = next((s for s in teacher.students if s.name == student_name), None)
+        if student:
+            layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+            feedback_input = TextInput(text=student.feedback, multiline=True)
+            layout.add_widget(feedback_input)
+            save_button = Button(text="Save Feedback", size_hint_y=None, height=40)
+            layout.add_widget(save_button)
+            save_button.bind(on_press=lambda x: self.save_feedback(student, feedback_input.text, popup))
+            popup = Popup(title="Give Feedback", content=layout, size_hint=(0.6, 0.5))
+            popup.open()
+
+    def save_feedback(self, student, feedback, popup):
+        student.feedback = feedback
+        self.show_popup("Success", "Feedback saved.")
+        popup.dismiss()
+
 
 if __name__ == "__main__":
     FeedbackApp().run()
