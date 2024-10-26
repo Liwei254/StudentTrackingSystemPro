@@ -1,3 +1,15 @@
+from kivy.app import App
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.popup import Popup
+from kivy.uix.spinner import Spinner
+from kivy.uix.scrollview import ScrollView
+from kivy.graphics import Color, Rectangle
+
+
 class Student:
     def __init__(self, name="", phone_number="", email_address="", feedback=""):
         self.name = name
@@ -5,164 +17,233 @@ class Student:
         self.email_address = email_address
         self.feedback = feedback
 
+
 class Teacher:
     def __init__(self, name=""):
         self.name = name
         self.students = [Student() for _ in range(2)]
 
-def give_feedback(student):
-    print("\nStudent Information:")
-    print(f"Name: {student.name}")
-    print(f"Phone Number: {student.phone_number}")
-    print(f"Email Address: {student.email_address}")
-    print(f"Feedback: {student.feedback}")
-    
-    student.feedback = input("\nEnter updated feedback for the student: ")
 
-def add_student(teacher):
-    new_student = Student()
-    new_student.name = input("\nEnter student name: ")
-    new_student.phone_number = input("Enter student phone number: ")
-    new_student.email_address = input("Enter student email address: ")
-    
-    for i in range(len(teacher.students)):
-        if not teacher.students[i].name:
-            teacher.students[i] = new_student
-            print("New student added successfully.")
-            break
+class FeedbackApp(App):
+    def build(self):
+        self.teachers = [
+            Teacher("Teacher1"),
+            Teacher("Teacher2"),
+            Teacher("Teacher3")
+        ]
 
-def delete_student(teacher):
-    try:
-        index = int(input(f"Enter the index of the student to delete (1-{len(teacher.students)}): ")) - 1
-        if 0 <= index < len(teacher.students):
-            teacher.students[index] = Student() 
-            print("Student deleted successfully.")
-        else:
-            print("Invalid index.")
-    except ValueError:
-        print("Invalid input.")
+        # Initialize student data
+        self.teachers[0].students[0] = Student("Student1", "111-111-1111", "student1@gmail.com", "")
+        self.teachers[0].students[1] = Student("Student2", "222-222-2222", "student2@gmail.com", "")
+        self.teachers[1].students[0] = Student("Student3", "333-333-3333", "student3@gmail.com", "")
+        self.teachers[1].students[1] = Student("Student4", "444-444-4444", "student4@gmail.com", "")
+        self.teachers[2].students[0] = Student("Student5", "555-555-5555", "student5@gmail.com", "")
+        self.teachers[2].students[1] = Student("Student6", "666-666-6666", "student6@gmail.com", "")
 
-def view_all_feedback(teacher):
-    print(f"\nFeedback for students supervised by {teacher.name}:")
-    for student in teacher.students:
-        if student.name:
-            print(f"Student: {student.name}")
-            print(f"Feedback: {student.feedback}")
+        # Main Layout
+        self.main_layout = BoxLayout(orientation="vertical", padding=200, spacing=10)
 
-def add_teacher(teachers, num_teachers):
-    if num_teachers >= 3:
-        print("Cannot add more teachers. Maximum number reached.")
-        return num_teachers
-    
-    new_teacher = Teacher()
-    new_teacher.name = input("\nEnter teacher name: ")
-    teachers.append(new_teacher)
-    
-    print("New teacher added successfully.")
-    return num_teachers + 1
+        # Set background color
+        with self.main_layout.canvas.before:
+            Color(0.9608, 0.9608, 0.9804, 1)  # #F5F5FA in RGBA
+            self.rect = Rectangle(size=self.main_layout.size, pos=self.main_layout.pos)
+        self.main_layout.bind(size=self.update_rect, pos=self.update_rect)
 
-def delete_teacher(teachers, num_teachers):
-    try:
-        index = int(input(f"Enter the index of the teacher to delete (1-{num_teachers}): ")) - 1
-        if 0 <= index < num_teachers:
-            del teachers[index]
-            print("Teacher deleted successfully.")
-            return num_teachers - 1
-        else:
-            print("Invalid index.")
-    except ValueError:
-        print("Invalid input.")
-    
-    return num_teachers
+        # Home Screen
+        self.show_home_screen()
 
-def main():
-    teachers = [
-        Teacher("Teacher1"),
-        Teacher("Teacher2"),
-        Teacher("Teacher3")
-    ]
-    
-    # Initialize some students
-    teachers[0].students[0] = Student("Student1", "111-111-1111", "student1@gmail.com", "")
-    teachers[0].students[1] = Student("Student2", "222-222-2222", "student2@gmail.com", "")
-    teachers[1].students[0] = Student("Student3", "333-333-3333", "student3@gmail.com", "")
-    teachers[1].students[1] = Student("Student4", "444-444-4444", "student4@gmail.com", "")
-    teachers[2].students[0] = Student("Student5", "555-555-5555", "student5@gmail.com", "")
-    teachers[2].students[1] = Student("Student6", "666-666-6666", "student6@gmail.com", "")
-    
-    num_teachers = len(teachers)
-    
-    user_type = int(input("Enter user type (1 for Manager, 2 for Teacher): "))
-    
-    if user_type == 1:
+        return self.main_layout
 
-        while True:
-            print("\nManager Menu:")
-            print("1. Add Teacher")
-            print("2. Delete Teacher")
-            print("3. View All Feedback")
-            print("0. Exit")
-            
-            choice = int(input("Enter your choice: "))
-            
-            if choice == 1:
-                num_teachers = add_teacher(teachers, num_teachers)
-            elif choice == 2:
-                num_teachers = delete_teacher(teachers, num_teachers)
-            elif choice == 3:
-                for teacher in teachers:
-                    view_all_feedback(teacher)
-            elif choice == 0:
-                print("Exiting program.")
-                break
-            else:
-                print("Invalid choice.")
-    
-    elif user_type == 2:
-        teacher_name = input("Enter teacher's name: ")
+    def update_rect(self, *args):
+        self.rect.size = self.main_layout.size
+        self.rect.pos = self.main_layout.pos
+
+    def show_home_screen(self):
+        self.main_layout.clear_widgets()
+        home_layout = BoxLayout(orientation="vertical", spacing=30, padding=10)
+        home_layout.add_widget(Label(text="Welcome to the Feedback System", font_size=24, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=50))
         
-        teacher = next((t for t in teachers if t.name == teacher_name), None)
-        
-        if teacher:
-            print(f"\n\nTeacher: {teacher.name}")
-            
-            print("Existing students:")
-            for idx, student in enumerate(teacher.students):
+        # MANAGER Button
+        manager_button = Button(text="MANAGER", size_hint_y=None, height=50)
+        manager_button.bind(on_press=self.show_manager_actions)
+        home_layout.add_widget(manager_button)
+
+        # TEACHER Button
+        teacher_button = Button(text="TEACHER", size_hint_y=None, height=50)
+        teacher_button.bind(on_press=self.show_teacher_actions)
+        home_layout.add_widget(teacher_button)
+
+        self.main_layout.add_widget(home_layout)
+
+    def show_manager_actions(self, instance):
+        self.main_layout.clear_widgets()
+        manager_layout = BoxLayout(orientation="vertical", spacing=10)
+
+        manager_layout.add_widget(Label(text="Manager Actions", font_size=20, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=40))
+        manager_layout.add_widget(Button(text="Add Teacher", on_press=self.add_teacher, size_hint_y=None, height=40))
+        manager_layout.add_widget(Button(text="Delete Teacher", on_press=self.delete_teacher, size_hint_y=None, height=40))
+        manager_layout.add_widget(Button(text="View All Feedback", on_press=self.view_all_feedback, size_hint_y=None, height=40))
+
+        # Back Button to return to Home
+        back_button = Button(text="Back to Home", size_hint_y=None, height=40)
+        back_button.bind(on_press=lambda x: self.show_home_screen())
+        manager_layout.add_widget(back_button)
+
+        self.main_layout.add_widget(manager_layout)
+
+    def show_teacher_actions(self, instance):
+        self.main_layout.clear_widgets()
+        teacher_layout = BoxLayout(orientation="vertical", spacing=10)
+
+        teacher_layout.add_widget(Label(text="Teacher Actions", font_size=20, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=40))
+        teacher_layout.add_widget(Button(text="Manage Teacher", on_press=self.select_teacher, size_hint_y=None, height=40))
+
+        # Back Button to return to Home
+        back_button = Button(text="Back to Home", size_hint_y=None, height=40)
+        back_button.bind(on_press=lambda x: self.show_home_screen())
+        teacher_layout.add_widget(back_button)
+
+        self.main_layout.add_widget(teacher_layout)
+
+    def show_popup(self, title, content):
+        popup_layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        popup_layout.add_widget(Label(text=content))
+        close_button = Button(text="Close", size_hint_y=None, height=40)
+        close_button.bind(on_press=lambda x: popup.dismiss())
+        popup_layout.add_widget(close_button)
+        popup = Popup(title=title, content=popup_layout, size_hint=(0.4, 0.3))
+        popup.open()
+
+    def add_teacher(self, instance):
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        input_name = TextInput(hint_text="Enter teacher name", multiline=False)
+        layout.add_widget(input_name)
+        add_button = Button(text="Add", size_hint_y=None, height=40)
+        layout.add_widget(add_button)
+        add_button.bind(on_press=lambda x: self.save_teacher(input_name.text, popup))
+        popup = Popup(title="Add Teacher", content=layout, size_hint=(0.4, 0.3))
+        popup.open()
+
+    def save_teacher(self, name, popup):
+        if name:
+            self.teachers.append(Teacher(name))
+            self.show_popup("Success", f"Teacher {name} added successfully.")
+            popup.dismiss()
+
+    def delete_teacher(self, instance):
+        teacher_names = [teacher.name for teacher in self.teachers]
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        teacher_spinner = Spinner(text="Choose a teacher", values=teacher_names)
+        layout.add_widget(teacher_spinner)
+        delete_button = Button(text="Delete", size_hint_y=None, height=40)
+        layout.add_widget(delete_button)
+        delete_button.bind(on_press=lambda x: self.remove_teacher(teacher_spinner.text, popup))
+        popup = Popup(title="Delete Teacher", content=layout, size_hint=(0.4, 0.3))
+        popup.open()
+
+    def remove_teacher(self, name, popup):
+        self.teachers = [teacher for teacher in self.teachers if teacher.name != name]
+        self.show_popup("Success", f"Teacher {name} deleted.")
+        popup.dismiss()
+
+    def view_all_feedback(self, instance):
+        feedback_text = ""
+        for teacher in self.teachers:
+            feedback_text += f"\nFeedback for {teacher.name}'s students:\n"
+            for student in teacher.students:
                 if student.name:
-                    print(f"{idx + 1}. {student.name}")
+                    feedback_text += f"Student: {student.name}, Feedback: {student.feedback}\n"
+        
+        if feedback_text:
+            layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
             
-            while True:
-                print("\nMenu:")
-                print("1. Give Feedback")
-                print("2. Add Student")
-                print("3. Delete Student")
-                print("0. Exit")
-                
-                choice = int(input("Enter your choice: "))
-                
-                if choice == 1:
-                    feedback_index = int(input(f"Enter the index of the student to give feedback (1-{len(teacher.students)}): ")) - 1
-                    if 0 <= feedback_index < len(teacher.students) and teacher.students[feedback_index].name:
-                        give_feedback(teacher.students[feedback_index])
-                    else:
-                        print("Invalid index or empty student.")
-                
-                elif choice == 2:
-                    add_student(teacher)
-                
-                elif choice == 3:
-                    delete_student(teacher)
-                
-                elif choice == 0:
-                    print("Exiting program.")
-                    break
-                else:
-                    print("Invalid choice.")
+            # Add a ScrollView for the feedback content
+            scroll_view = ScrollView(size_hint=(1, 1))  # Keep it simple and scrollable
+            feedback_label = Label(text=feedback_text, size_hint_y=None)
+            feedback_label.bind(texture_size=feedback_label.setter('size'))  # Auto-resize label height
+            scroll_view.add_widget(feedback_label)
+            
+            layout.add_widget(scroll_view)
+            
+            close_button = Button(text="Close", size_hint_y=None, height=40)
+            close_button.bind(on_press=lambda x: popup.dismiss())
+            layout.add_widget(close_button)
+            
+            popup = Popup(title="All Feedback", content=layout, size_hint=(0.6, 0.6))
+            popup.open()
         else:
-            print("Teacher not found.")
-    
-    else:
-        print("Invalid user type.")
+            self.show_popup("No Feedback", "No feedback available for any students.")
+
+    def select_teacher(self, instance):
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        teacher_names = [teacher.name for teacher in self.teachers]
+        teacher_spinner = Spinner(text="Choose a teacher", values=teacher_names)
+        layout.add_widget(teacher_spinner)
+
+        manage_button = Button(text="Manage", size_hint_y=None, height=40)
+        layout.add_widget(manage_button)
+        manage_button.bind(on_press=lambda x: self.manage_teacher(teacher_spinner.text))
+
+        popup = Popup(title="Select Teacher", content=layout, size_hint=(0.4, 0.4))
+        popup.open()
+
+    def manage_teacher(self, teacher_name):
+        teacher = next((t for t in self.teachers if t.name == teacher_name), None)
+        if teacher:
+            layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+
+            student_names = [student.name for student in teacher.students]
+            student_spinner = Spinner(text="Choose a student", values=student_names)
+            layout.add_widget(student_spinner)
+
+            add_button = Button(text="Add Student", size_hint_y=None, height=40)
+            layout.add_widget(add_button)
+            add_button.bind(on_press=lambda x: self.add_student(teacher))
+
+            delete_button = Button(text="Delete Student", size_hint_y=None, height=40)
+            layout.add_widget(delete_button)
+            delete_button.bind(on_press=lambda x: self.delete_student(teacher, student_spinner.text))
+
+            manage_popup = Popup(title="Manage Teacher", content=layout, size_hint=(0.4, 0.5))
+            manage_popup.open()
+
+    def add_student(self, teacher):
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        input_name = TextInput(hint_text="Enter student name", multiline=False)
+        layout.add_widget(input_name)
+        add_button = Button(text="Add", size_hint_y=None, height=40)
+        layout.add_widget(add_button)
+        add_button.bind(on_press=lambda x: self.save_student(teacher, input_name.text, popup))
+        popup = Popup(title="Add Student", content=layout, size_hint=(0.4, 0.3))
+        popup.open()
+
+    def save_student(self, teacher, name, popup):
+        if name:
+            teacher.students.append(Student(name=name))
+            self.show_popup("Success", f"Student {name} added.")
+            popup.dismiss()
+
+    def delete_student(self, teacher, student_name):
+        teacher.students = [s for s in teacher.students if s.name != student_name]
+        self.show_popup("Success", f"Student {student_name} deleted.")
+
+    def give_feedback(self, teacher, student_name):
+        student = next((s for s in teacher.students if s.name == student_name), None)
+        if student:
+            layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+            feedback_input = TextInput(text=student.feedback, multiline=True)
+            layout.add_widget(feedback_input)
+            save_button = Button(text="Save Feedback", size_hint_y=None, height=40)
+            layout.add_widget(save_button)
+            save_button.bind(on_press=lambda x: self.save_feedback(student, feedback_input.text, popup))
+            popup = Popup(title="Give Feedback", content=layout, size_hint=(0.6, 0.5))
+            popup.open()
+
+    def save_feedback(self, student, feedback, popup):
+        student.feedback = feedback
+        self.show_popup("Success", "Feedback saved.")
+        popup.dismiss()
+
 
 if __name__ == "__main__":
-    main()
+    FeedbackApp().run()
