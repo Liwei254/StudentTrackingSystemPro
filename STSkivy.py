@@ -83,6 +83,7 @@ class FeedbackApp(App):
         manager_layout.add_widget(Button(text="Add Teacher", on_press=self.add_teacher, size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="Delete Teacher", on_press=self.delete_teacher, size_hint_y=None, height=40))
         manager_layout.add_widget(Button(text="View All Feedback", on_press=self.view_all_feedback, size_hint_y=None, height=40))
+        manager_layout.add_widget(Button(text="Add Student", on_press=self.add_student, size_hint_y=None, height=40))  # Add Student Button
 
         # Back Button to return to Home
         back_button = Button(text="Back to Home", size_hint_y=None, height=40)
@@ -174,13 +175,48 @@ class FeedbackApp(App):
         else:
             self.show_popup("No Feedback", "No feedback available for any students.")
 
+    def add_student(self, instance):
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        student_name_input = TextInput(hint_text="Enter student name", multiline=False)
+        student_phone_input = TextInput(hint_text="Enter student phone number", multiline=False)
+        student_email_input = TextInput(hint_text="Enter student email", multiline=False)
+
+        layout.add_widget(student_name_input)
+        layout.add_widget(student_phone_input)
+        layout.add_widget(student_email_input)
+
+        teacher_names = [teacher.name for teacher in self.teachers]
+        teacher_spinner = Spinner(text="Select Teacher", values=teacher_names)
+        layout.add_widget(teacher_spinner)
+
+        add_button = Button(text="Add Student", size_hint_y=None, height=40)
+        layout.add_widget(add_button)
+        add_button.bind(on_press=lambda x: self.save_student(student_name_input.text, student_phone_input.text, student_email_input.text, teacher_spinner.text, popup))
+
+        popup = Popup(title="Add Student", content=layout, size_hint=(0.5, 0.6))
+        popup.open()
+
+    def save_student(self, name, phone_number, email, teacher_name, popup):
+        if name and teacher_name:
+            teacher = next((t for t in self.teachers if t.name == teacher_name), None)
+            if teacher:
+                new_student = Student(name, phone_number, email)
+                teacher.students.append(new_student)
+                self.show_popup("Success", f"Student {name} added successfully to {teacher_name}.")
+                popup.dismiss()
+            else:
+                self.show_popup("Error", "Teacher not found.")
+        else:
+            self.show_popup("Error", "Name and Teacher are required fields.")
+
+
     def select_teacher(self, instance):
         layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
         teacher_names = [teacher.name for teacher in self.teachers]
         teacher_spinner = Spinner(text="Choose a teacher", values=teacher_names)
         layout.add_widget(teacher_spinner)
 
-        manage_button = Button(text="Manage Students", size_hint_y=None, height=40)
+        manage_button = Button(text="Manage Teacher", size_hint_y=None, height=40)
         layout.add_widget(manage_button)
         manage_button.bind(on_press=lambda x: self.manage_teacher(teacher_spinner.text))
 
