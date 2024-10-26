@@ -6,6 +6,7 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.uix.spinner import Spinner
+from kivy.uix.scrollview import ScrollView
 from kivy.graphics import Color, Rectangle
 
 
@@ -95,7 +96,7 @@ class FeedbackApp(App):
         teacher_layout = BoxLayout(orientation="vertical", spacing=10)
 
         teacher_layout.add_widget(Label(text="Teacher Actions", font_size=20, color=(0.396, 0.607, 0.749, 1), size_hint_y=None, height=40))
-        teacher_layout.add_widget(Button(text="Manage Teacher", on_press=self.select_teacher, size_hint_y=None, height=40))
+        teacher_layout.add_widget(Button(text="Manage Your Students", on_press=self.select_teacher, size_hint_y=None, height=40))
 
         # Back Button to return to Home
         back_button = Button(text="Back to Home", size_hint_y=None, height=40)
@@ -152,71 +153,75 @@ class FeedbackApp(App):
             for student in teacher.students:
                 if student.name:
                     feedback_text += f"Student: {student.name}, Feedback: {student.feedback}\n"
+        
         if feedback_text:
-            self.show_popup("All Feedback", feedback_text)
+            layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+            
+            # Add a ScrollView for the feedback content
+            scroll_view = ScrollView(size_hint=(1, 1))  # Keep it simple and scrollable
+            feedback_label = Label(text=feedback_text, size_hint_y=None)
+            feedback_label.bind(texture_size=feedback_label.setter('size'))  # Auto-resize label height
+            scroll_view.add_widget(feedback_label)
+            
+            layout.add_widget(scroll_view)
+            
+            close_button = Button(text="Close", size_hint_y=None, height=40)
+            close_button.bind(on_press=lambda x: popup.dismiss())
+            layout.add_widget(close_button)
+            
+            popup = Popup(title="All Feedback", content=layout, size_hint=(0.6, 0.6))
+            popup.open()
         else:
             self.show_popup("No Feedback", "No feedback available for any students.")
 
     def select_teacher(self, instance):
-        teacher_names = [teacher.name for teacher in self.teachers]
         layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-        teacher_spinner = Spinner(text="Select a teacher", values=teacher_names)
+        teacher_names = [teacher.name for teacher in self.teachers]
+        teacher_spinner = Spinner(text="Choose a teacher", values=teacher_names)
         layout.add_widget(teacher_spinner)
-        manage_button = Button(text="Manage", size_hint_y=None, height=40)
+
+        manage_button = Button(text="Manage Students", size_hint_y=None, height=40)
         layout.add_widget(manage_button)
-        manage_button.bind(on_press=lambda x: self.manage_teacher(teacher_spinner.text, popup))
-        popup = Popup(title="Select Teacher", content=layout, size_hint=(0.4, 0.3))
+        manage_button.bind(on_press=lambda x: self.manage_teacher(teacher_spinner.text))
+
+        popup = Popup(title="Select Teacher", content=layout, size_hint=(0.4, 0.4))
         popup.open()
 
-    def manage_teacher(self, teacher_name, popup):
+    def manage_teacher(self, teacher_name):
         teacher = next((t for t in self.teachers if t.name == teacher_name), None)
-        popup.dismiss()
         if teacher:
             layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-            student_spinner = Spinner(text="Select a student", values=[s.name for s in teacher.students if s.name])
+
+            student_names = [student.name for student in teacher.students]
+            student_spinner = Spinner(text="Choose a student", values=student_names)
             layout.add_widget(student_spinner)
-            feedback_button = Button(text="Give Feedback", size_hint_y=None, height=40)
-            layout.add_widget(feedback_button)
-            feedback_button.bind(on_press=lambda x: self.give_feedback(teacher, student_spinner.text))
-            add_button = Button(text="Add Student", size_hint_y=None, height=40)
-            layout.add_widget(add_button)
-            add_button.bind(on_press=lambda x: self.add_student(teacher))
-            delete_button = Button(text="Delete Student", size_hint_y=None, height=40)
-            layout.add_widget(delete_button)
-            delete_button.bind(on_press=lambda x: self.delete_student(teacher, student_spinner.text))
+
+            view_feedback_button = Button(text="View Feedback", size_hint_y=None, height=40)
+            layout.add_widget(view_feedback_button)
+            view_feedback_button.bind(on_press=lambda x: self.view_student_feedback(teacher, student_spinner.text))
+
+            add_feedback_button = Button(text="Add Feedback", size_hint_y=None, height=40)
+            layout.add_widget(add_feedback_button)
+            add_feedback_button.bind(on_press=lambda x: self.give_feedback(teacher, student_spinner.text))
+
             manage_popup = Popup(title="Manage Teacher", content=layout, size_hint=(0.4, 0.5))
             manage_popup.open()
 
-    def add_student(self, teacher):
-        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-        input_name = TextInput(hint_text="Enter student name", multiline=False)
-        layout.add_widget(input_name)
-        add_button = Button(text="Add", size_hint_y=None, height=40)
-        layout.add_widget(add_button)
-        add_button.bind(on_press=lambda x: self.save_student(teacher, input_name.text, popup))
-        popup = Popup(title="Add Student", content=layout, size_hint=(0.4, 0.3))
-        popup.open()
-
-    def save_student(self, teacher, name, popup):
-        if name:
-            teacher.students.append(Student(name=name))
-            self.show_popup("Success", f"Student {name} added.")
-            popup.dismiss()
-
-    def delete_student(self, teacher, student_name):
-        teacher.students = [s for s in teacher.students if s.name != student_name]
-        self.show_popup("Success", f"Student {student_name} deleted.")
+    def view_student_feedback(self, teacher, student_name):
+        student = next((s for s in teacher.students if s.name == student_name), None)
+        if student:
+            self.show_popup(f"Feedback for {student.name}", student.feedback or "No feedback provided yet.")
 
     def give_feedback(self, teacher, student_name):
         student = next((s for s in teacher.students if s.name == student_name), None)
         if student:
             layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
-            feedback_input = TextInput(text=student.feedback, multiline=True)
+            feedback_input = TextInput(text=student.feedback, hint_text="Enter feedback", multiline=True)
             layout.add_widget(feedback_input)
             save_button = Button(text="Save Feedback", size_hint_y=None, height=40)
             layout.add_widget(save_button)
             save_button.bind(on_press=lambda x: self.save_feedback(student, feedback_input.text, popup))
-            popup = Popup(title="Give Feedback", content=layout, size_hint=(0.6, 0.5))
+            popup = Popup(title=f"Give Feedback for {student.name}", content=layout, size_hint=(0.6, 0.5))
             popup.open()
 
     def save_feedback(self, student, feedback, popup):
